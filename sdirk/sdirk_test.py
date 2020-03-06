@@ -25,9 +25,9 @@ def J(t, y, arg1):
 #    return [[arg1*(-y[0]**2+1), arg1],[-1.0, 0.0]]
 
     
-param_value = 8.0
+param_value = 10.0
 t1 = 100.0
-dt = 0.05
+dt = 0.01
 
 """ SDIRK Butcher tables 
     *2 - 2-d order A and L-stable
@@ -50,16 +50,16 @@ b3 = [delta, 1-2*delta, delta]
 c3 = [gamma, 1/2, 1-gamma]
 
 
-r_sdirk2 = sdirk(f = f, jac = J, A = A2, c = c2, b = b2, b_hat = None, use_full_newton = False)
-r_sdirk3 = sdirk(f = f, jac = J, A = A3, c = c3, b = b3, b_hat = None, use_full_newton = False)
-r_sdirk4 = sdirk(f = f, jac = J, A = A4, c = c4, b = b4, b_hat = None, use_full_newton = False)
+r_sdirk2 = sdirk(f = f, jac = J, A = A2, c = c2, b = b2, b_hat = None, use_full_newton = 'sdirk')
+r_sdirk3 = sdirk(f = f, jac = J, A = A3, c = c3, b = b3, b_hat = None, use_full_newton = 'sdirk')
+r_sdirk4 = sdirk(f = f, jac = J, A = A4, c = c4, b = b4, b_hat = None, use_full_newton = 'sdirk')
 
 
 
-#r = ode(f).set_integrator('dop853')
+r = ode(f).set_integrator('dop853', rtol = 1.0e-11, atol = 1.0e-12)
 #r = ode(f).set_integrator('dopri5')
-#r = ode(f, J).set_integrator('vode', method = 'adams', with_jacobian = True)
-r = ode(f, J).set_integrator('vode', method = 'bdf', with_jacobian = True, min_step = dt, max_step = dt, first_step = dt, atol = 100.0, rtol = 100.0, order = 2)
+#r = ode(f, J).set_integrator('vode', method = 'bdf', with_jacobian = True)
+#r = ode(f, J).set_integrator('vode', method = 'bdf', with_jacobian = True, min_step = dt, max_step = dt, first_step = dt, atol = 100.0, rtol = 100.0, order = 5)
 
 r.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
 r_sdirk2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
@@ -112,4 +112,17 @@ plt.plot(np.transpose(np.transpose(all_y_sdirk2)[1]),np.transpose(np.transpose(a
 plt.plot(np.transpose(np.transpose(all_y_sdirk3)[1]),np.transpose(np.transpose(all_y_sdirk3)[0]))
 plt.plot(np.transpose(np.transpose(all_y_sdirk4)[1]),np.transpose(np.transpose(all_y_sdirk4)[0]))
 plt.legend(['python native','sdirk2','sdirk3','sdirk4'])
+plt.show()
+
+err_sdirk2 = np.array(all_y_sdirk2) - np.array(all_y)
+err_sdirk3 = np.array(all_y_sdirk3) - np.array(all_y)
+err_sdirk4 = np.array(all_y_sdirk4) - np.array(all_y)
+err_sdirk2_norm = np.sqrt(np.transpose(err_sdirk2)[0]**2+np.transpose(err_sdirk2)[1]**2)
+err_sdirk3_norm = np.sqrt(np.transpose(err_sdirk3)[0]**2+np.transpose(err_sdirk3)[1]**2)
+err_sdirk4_norm = np.sqrt(np.transpose(err_sdirk4)[0]**2+np.transpose(err_sdirk4)[1]**2)
+plt.figure()
+plt.plot(np.log(err_sdirk2_norm))
+plt.plot(np.log(err_sdirk3_norm))
+plt.plot(np.log(err_sdirk4_norm))
+plt.legend(['err sdirk2','err sdirk3','err sdirk4'])
 plt.show()

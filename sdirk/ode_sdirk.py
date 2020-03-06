@@ -40,7 +40,7 @@ class ode_sdirk(object):
             self.use_adoptation = False
         self._y1 = []
         self._dt = 0.0
-        self.eps_newton = 1.0e-10
+        self.eps_newton = 1.0e-11
         
 
     @property
@@ -96,7 +96,7 @@ class ode_sdirk(object):
             norm_newton = linalg.norm(b)
             iterations = iterations + 1
             if iterations > 1000:
-                print('Newton filed to converge with norm = ', norm_newton, '\n')
+                print('Newton failed to converge with norm = ', norm_newton, '\n')
                 break
         return(y_n)
         
@@ -128,6 +128,31 @@ class ode_sdirk(object):
                 print('Newton filed to converge with norm = ', norm_newton, '\n')
                 break
         return(y_n)
+    
+    def __newton_sdirk(self, y_n, rhs, stage_number):
+        c_l = self.c[stage_number]        
+        du = zeros(self.n_vec);
+        norm_newton = 1    
+        iterations = 0
+        if stage_number == 0:
+            while(norm_newton>self.eps_newton):
+                if stage_number == 0:
+                    self.iJ = self.__solve_linear_system_matrix(y_n, c_l)            
+                b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
+                b = rhs + b1        
+                du = self.__apply_system_imatrix(self.iJ, b)
+                y_n = y_n + du
+                norm_newton = linalg.norm(b)
+                iterations = iterations + 1
+                if iterations > 1000:
+                    print('Newton filed to converge with norm = ', norm_newton, '\n')
+                    break
+        else:
+             #b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params))
+             #b = rhs + b1
+             y_n = self.__apply_system_imatrix(self.iJ, rhs)
+             
+        return(y_n)
         
     def __form_rhs(self, stage_number):
         rhs = zeros(self.n_vec)
@@ -155,10 +180,14 @@ class ode_sdirk(object):
         for j in range(0,self.s):
             rhs = self._y + self.__form_rhs(j)
             
-            if self.use_full_newton:
+            if self.use_full_newton == 'full':
                 self._y1 = self.__newton(self._y1, rhs, j) # solves linsys on each iter
-            else:
+            elif self.use_full_newton == 'sdirk':
+                self._y1 = self.__newton_sdirk(self._y1, rhs, j) # applies initial inverse
+            elif self.use_full_newton == 'freeze':
                 self._y1 = self.__newton_matrix(self._y1, rhs, j) # applies initial inverse
+            else:
+                print('Incorrect newton method scheme\n')
 
             self.y_stages.append(self._y1)
             
