@@ -53,7 +53,7 @@ def exact_advection(c, x, Tf):
     U_exact = np.zeros((len(x)))
     #print(x)
     x = x+1;
-    x_ch = x - c * Tf
+    x_ch = x - Tf
     #print(x_ch)
     # for i in range(len(x_ch)):
     #    if (x_ch[i] < 0):
@@ -73,7 +73,7 @@ def exact_advection(c, x, Tf):
 
 
 t0 = 0
-t1 = 5.0
+t1 = 2.0
 dt = 0.1
 N = 100
 a = -1
