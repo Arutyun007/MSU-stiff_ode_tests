@@ -12,7 +12,7 @@ from numpy import asarray, zeros, isscalar, linalg, identity, multiply, dot
 
 
 class ode_sdirk(object):
-    def __init__(self, f, jac, A, c, b, b_hat = None, use_full_newton = False):
+    def __init__(self, f, jac, A, c, b, b_hat = None, use_full_newton = None):
         self.stiff = 0
         self.f = f
         self.jac = jac
@@ -40,7 +40,7 @@ class ode_sdirk(object):
             self.use_adoptation = False
         self._y1 = []
         self._dt = 0.0
-        self.eps_newton = 1.0e-11
+        self.eps_newton = 1.0e-6
         
 
     @property
@@ -88,12 +88,26 @@ class ode_sdirk(object):
         du = zeros(self.n_vec);
         norm_newton = 1
         iterations = 0
+        b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
+        b = rhs + b1
         while(norm_newton>self.eps_newton):
-            b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
-            b = rhs + b1
+            wght = 1.0
+            norm_newton_initial = linalg.norm(b)
             du = self.__solve_linear_system(y_n, b, stage_number)
-            y_n = y_n + du
+            y_n1 = y_n + wght*du
+            b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n1, self.f_params)) - y_n1
+            b = rhs + b1    
             norm_newton = linalg.norm(b)
+            while norm_newton>norm_newton_initial and wght>=1.0e-9:
+                wght = wght*0.5
+                y_n1 = y_n + wght*du
+                b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n1, self.f_params)) - y_n1
+                b = rhs + b1    
+                norm_newton = linalg.norm(b)
+            if wght < 1.0e-6:
+                print("norm_newton_initial = ", norm_newton_initial, " norm_newton = ", norm_newton, " wght = ", wght, " dt = ", self._dt )
+
+            y_n = y_n1
             iterations = iterations + 1
             if iterations > 1000:
                 print('Newton failed to converge with norm = ', norm_newton, '\n')
@@ -115,14 +129,25 @@ class ode_sdirk(object):
         if stage_number == 0:
             self.iJ = self.__solve_linear_system_matrix(y_n, c_l)
         du = zeros(self.n_vec);
-        norm_newton = 1    
+        b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
+        b = rhs + b1   
+        norm_newton = linalg.norm(b) 
         iterations = 0
-        while(norm_newton>self.eps_newton):
-            b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
-            b = rhs + b1        
+        while norm_newton>self.eps_newton:
+            wght = 1.0
+            norm_newton_initial = linalg.norm(b)
             du = self.__apply_system_imatrix(self.iJ, b)
-            y_n = y_n + du
+            y_n1 = y_n + wght*du
+            b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n1, self.f_params)) - y_n1
+            b = rhs + b1  
             norm_newton = linalg.norm(b)
+            while norm_newton>norm_newton_initial and wght>=1.0e-9:
+                wght = wght*0.5
+                y_n1 = y_n + wght*du
+                b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n1, self.f_params)) - y_n1
+                b = rhs + b1    
+                norm_newton = linalg.norm(b)        
+            y_n = y_n1
             iterations = iterations + 1
             if iterations > 1000:
                 print('Newton filed to converge with norm = ', norm_newton, '\n')
@@ -135,14 +160,27 @@ class ode_sdirk(object):
         norm_newton = 1    
         iterations = 0
         if stage_number == 0:
-            while(norm_newton>self.eps_newton):
+            b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
+            b = rhs + b1        
+            norm_newton = linalg.norm(b)
+
+            while norm_newton>self.eps_newton:
                 if stage_number == 0:
                     self.iJ = self.__solve_linear_system_matrix(y_n, c_l)            
-                b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n, self.f_params)) - y_n
-                b = rhs + b1        
+                wght = 1.0
+                norm_newton_initial = linalg.norm(b)     
                 du = self.__apply_system_imatrix(self.iJ, b)
-                y_n = y_n + du
+                y_n1 = y_n + wght*du
+                b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n1, self.f_params)) - y_n1
+                b = rhs + b1   
                 norm_newton = linalg.norm(b)
+                while norm_newton>norm_newton_initial and wght>=1.0e-9:
+                    wght = wght*0.5
+                    y_n1 = y_n + wght*du
+                    b1 = self._dt*multiply(self.gamma, self.f(self.t+c_l*self._dt, y_n1, self.f_params)) - y_n1
+                    b = rhs + b1    
+                    norm_newton = linalg.norm(b)  
+                y_n = y_n1
                 iterations = iterations + 1
                 if iterations > 1000:
                     print('Newton filed to converge with norm = ', norm_newton, '\n')

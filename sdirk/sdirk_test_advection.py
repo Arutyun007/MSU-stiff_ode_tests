@@ -48,6 +48,12 @@ def initial_condition(c, x):
     #plt.show()
     return u0
 
+
+def initial_condition_1(c, x):
+    mask = x>0;
+    u0 = mask*1.0;
+    return u0;
+
 def exact_advection(c, x, Tf):
     # exact solution
     U_exact = np.zeros((len(x)))
@@ -71,11 +77,24 @@ def exact_advection(c, x, Tf):
     #myfunc = initial_condition(c, x_mod)
     return U_exact
 
+def exact_advection_1(c, x, Tf):
+    # exact solution
+    U_exact = np.zeros((len(x)))
+    x = x+1;
+    x_ch = x - Tf
+
+    x_mod = np.mod(x_ch, 2)
+    for i in range(len(U_exact)):
+        if x_mod[i]-1 >0:
+            U_exact[i] = 1
+    return U_exact
+
+
 
 t0 = 0
 t1 = 2.0
 dt = 0.1
-N = 100
+N = 200
 a = -1
 b = 1
 c_exp = 5.0
@@ -84,7 +103,7 @@ c_exp = 5.0
 AD1 = advection_first_order(N)
 x = np.linspace(a, b, N)  # x span
 
-y0 = initial_condition(c_exp, x)
+y0 = initial_condition_1(c_exp, x)
 """ SDIRK Butcher tables 
     *2 - 2-d order A and L-stable
     *3 - 4-th order A-stable
@@ -154,7 +173,11 @@ while r_sdirk4.t <= t1:
 
 print('BDF\n')
 while r.successful() and r.t <= t1:
-    r.integrate(r.t+dt)
+    if (r.t+dt)>t1:
+        dt1 = t1-r.t
+    else:
+        dt1 = dt
+    r.integrate(r.t+dt1)
     all_t.append(r.t)
     all_y.append(r.y)
 
@@ -164,7 +187,7 @@ while r.successful() and r.t <= t1:
 #plt.show()
 
 plt.figure()
-plt.plot(x, exact_advection(c_exp, x, t1) )
+plt.plot(x, exact_advection_1(c_exp, x, t1) )
 plt.plot(x, r_sdirk2.y, '*')
 plt.plot(x, r_sdirk3.y, '*')
 plt.plot(x, r_sdirk4.y, '*')
