@@ -286,10 +286,10 @@ class exact_solution_hopf(object):
 t0 = 0.0
 t1 =  2187/4096
 #t1 = 3.0
-CFL = 1.0
+CFL = 10.0
 N = 200
 dh = 2.0 * np.pi/N
-dt = 2.0 * np.pi/(N*CFL)
+dt = CFL * dh
 print("dt initial", dt)
 a = 0
 b = 2*np.pi
@@ -437,7 +437,12 @@ def L2_error(u0, u, Nx, h):
     res = np.sqrt(trapz_method(u0_u_dif, h, Nx))
     return res
 
-
+def L2_error_relative(u0, u, Nx, h):
+    res = 0
+    #print(u0)
+    u0_u_dif = np.power(u0 - u, 2)
+    res = np.sqrt(trapz_method(u0_u_dif, h, Nx)) / np.sqrt(trapz_method(np.power(u0, 2), h, Nx))
+    return res
 
 
 
@@ -445,7 +450,7 @@ def L2_error(u0, u, Nx, h):
 
 plt.figure()
 
-plt.plot((x+ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1))
+plt.plot(x, np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)))
 legend_array = ["exact solution, t = {Tf}".format(Tf=t1)]
 plt.legend(legend_array)
 plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl = CFL, RS = riemann_solver_type))
@@ -457,13 +462,24 @@ for y,yi,o in zip(y_orders, yi_orders, orders):
     if o==1:
         legend_array.append("1st order{}, ".format(implicit_method) )
         legend_array.append("1st order, ref:{}".format(reference_method) )
-        print("L2_error 1st order{} = " .format(implicit_method), L2_error(ES.hopf(c_exp, x, t1), yi, N, dh))
-        print("L2_error 1st order{} = ".format(reference_method), L2_error(ES.hopf(c_exp, x, t1), y, N, dh))
+        print("L2_error 1st order{} = " .format(implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
+        print("L2_error 1st order{} = ".format(reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
+
+        print("L2_error relative 1st order{} = ".format(implicit_method),
+              L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
+        print("L2_error relative 1st order{} = ".format(reference_method),
+              L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
     else:
         legend_array.append("WENO{order}, {method}".format(order = o, method = implicit_method))
         legend_array.append("WENO{order}, ref:{method}".format(order = o, method = reference_method))
-        print("L2_error WENO{order}, {method}".format(order = o, method = implicit_method), L2_error(ES.hopf(c_exp, x, t1), yi, N, dh))
-        print("L2_error WENO{order}, ref:{method}".format(order = o, method = reference_method), L2_error(ES.hopf(c_exp, x, t1), y, N, dh))
+        print("L2_error WENO{order}, {method}".format(order = o, method = implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
+        print("L2_error WENO{order}, ref:{method}".format(order = o, method = reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
+
+
+        print("L2_error relative WENO{order}, {method}".format(order=o, method=implicit_method),
+              L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
+        print("L2_error relative WENO{order}, ref:{method}".format(order=o, method=reference_method),
+              L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
 plt.legend(legend_array)
 plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl = CFL, RS = riemann_solver_type))
 plt.show()
