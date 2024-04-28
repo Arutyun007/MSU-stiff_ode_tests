@@ -17,14 +17,15 @@ class riemann_solver(object):
 
     def __upwind(self, l, r):
         c = self.__flux_derivative(l)
-        if c<0.0:
+        if c < 0.0:
             return c*r;
         else:
             return c*l;
 
     def __lf(self, l, r):
         c = np.abs(self.__flux_derivative(l))
-        return 0.5*(self.__flux(l) + self.__flux(r) ) - c*(r-l)
+        return 0.5*(self.__flux(l) + self.__flux(r)) - c*(r-l)
+        #return 0.5 * (self.__flux(l) + self.__flux(r)) - (r*r - l*l)
 
 
     # side flux
