@@ -295,7 +295,7 @@ a = 0
 b = 2*np.pi
 c_exp = 1.0
 orders = [1,3,5]
-implicit_method = "SDIRK4" #"IE" "SDIRK4" "SDIRK3" "SDIRK2"
+implicit_method = "IE" #"IE" "SDIRK4" "SDIRK3" "SDIRK2"
 newton_jacobian = "freeze" #"full"  "sdirk" "freeze"
 riemann_solver_type = "LF" #"upwind"# "LF"
 exact_solution_type = "sinus" #"exponent"
@@ -303,7 +303,7 @@ exact_solution_type = "sinus" #"exponent"
 equation = "hopf" #"advection", "Hopf(inviscid Burgers)"
 print("equation = ", equation)
 print("using CFL = ", CFL, " dt = ", dt)
-print("hello = ")
+#print("hello = ")
 if equation == "advection":
     AD1 = advection(N, riemann_solver_type, 5)
     x = np.linspace(a, b, N)  # x span
@@ -459,31 +459,41 @@ plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl = CFL, RS = riemann_so
 for y,yi,o in zip(y_orders, yi_orders, orders):
     plt.plot(x, yi, '*')
     plt.plot(x, y, '.')
+
     if o==1:
         legend_array.append("1st order{}, ".format(implicit_method) )
         legend_array.append("1st order, ref:{}".format(reference_method) )
-        print("L2_error 1st order{} = " .format(implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
-        print("L2_error 1st order{} = ".format(reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
+        #print("L2_error 1st order{} = " .format(implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
+        #print("L2_error 1st order{} = ".format(reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
 
         print("L2_error relative 1st order{} = ".format(implicit_method),
               L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
         print("L2_error relative 1st order{} = ".format(reference_method),
               L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
+        f = open('CFL={cfl}, IM={im}.txt'.format(cfl=CFL, im=implicit_method), 'w')
+        f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))+' ')
+        f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))+' ')
+        #f.write("hello")
+
     else:
         legend_array.append("WENO{order}, {method}".format(order = o, method = implicit_method))
         legend_array.append("WENO{order}, ref:{method}".format(order = o, method = reference_method))
-        print("L2_error WENO{order}, {method}".format(order = o, method = implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
-        print("L2_error WENO{order}, ref:{method}".format(order = o, method = reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
+        #print("L2_error WENO{order}, {method}".format(order = o, method = implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
+        #print("L2_error WENO{order}, ref:{method}".format(order = o, method = reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
 
 
         print("L2_error relative WENO{order}, {method}".format(order=o, method=implicit_method),
               L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
         print("L2_error relative WENO{order}, ref:{method}".format(order=o, method=reference_method),
               L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
+        f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh)) + ' ')
+        f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh)) + ' ')
+        #f.close()
+
 plt.legend(legend_array)
 plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl = CFL, RS = riemann_solver_type))
 plt.show()
-
+f.close()
 
 
 
