@@ -280,30 +280,33 @@ def L2_error_relative(u0, u, Nx, h):
 
 
 t0 = 0.0
-t1 = 2187/4096
-CFL_arr = [0.5, 1.0, 4.0, 6.0, 8.0, 10.0]
-#CFL_arr = [0.5, 1.0]
+t1 = 2.0
+#CFL_arr = [0.5, 1.0, 4.0, 6.0, 8.0, 10.0]
+CFL_arr = [0.5, 1.0]
 N = 200
-dh = 2.0 * np.pi/N
+dh = 2.0 /N
 #dt = CFL * dh
-a = 0
-b = 2*np.pi
-c_exp = 1.0
+#a = 0
+#b = 2*np.pi
+
+a = -1
+b = 1
+c_exp = 30.0
 orders = [1,3,5]
 #implicit_method_arr = ["IE", "IM", "CN", "L2C", "L3A", "G2P4", "G3P6", "L3B", "L3AS4", "SDIRK1BDF", "SDIRK4", "SDIRK3", "SDIRK2", "L3C", "R2A", "R2AS"]
 
-implicit_method_arr = ["L3B", "L3AS4", "SDIRK1BDF", "SDIRK4", "SDIRK3", "SDIRK2", "L3C", "R2A", "R2AS"]
+implicit_method_arr = ["SDIRK4", "SDIRK3"]
 #implicit_method_arr = ["SDIRK4", "SDIRK3"]#"IE", "IM", "CN", "L2C", "L3A", "G2P4", "G3P6", "L3B", "L3AS4", "SDIRK1BDF", "SDIRK4", "SDIRK3", "SDIRK2", "L3C", "R2A", "R2AS"
 newton_jacobian = "freeze" #"full"  "sdirk" "freeze"
-riemann_solver_type = "LF" #"upwind"# "LF"
-exact_solution_type = "sinus" #"exponent"
-equation = "hopf"  # "advection", "Hopf(inviscid Burgers)"
+riemann_solver_type = "upwind" #"upwind"# "LF"
+exact_solution_type = "canonic" #"exponent"
+equation = "advection"  # "advection", "Hopf(inviscid Burgers)"
 print("equation = ", equation)
 
 for implicit_method in implicit_method_arr:
     print("using implicit_method = ", implicit_method)
     for CFL in CFL_arr:
-        dt = CFL * dh
+        dt = 2.0/N*CFL
         print("using CFL = ", CFL, " dt = ", dt)
         if equation == "advection":
             AD1 = advection(N, riemann_solver_type, 5)
@@ -651,56 +654,65 @@ for implicit_method in implicit_method_arr:
 
 
 
-        #plt.figure()
+        plt.figure()
 
-       # plt.plot(x, np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)))
-       # legend_array = ["exact solution, t = {Tf}".format(Tf=t1)]
+        plt.plot(x, ES.advect(c_exp, x, t1))
+        legend_array = ["exact solution, t = {Tf}".format(Tf=t1)]
         #plt.legend(legend_array)
         #plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl=CFL, RS=riemann_solver_type))
         # plt.show()
 
         for y, yi, o in zip(y_orders, yi_orders, orders):
-           # plt.plot(x, yi, '*')
-           # plt.plot(x, y, '.')
+            plt.plot(x, yi, '*')
+            plt.plot(x, y, '.')
 
             if o == 1:
-                #legend_array.append("1st order{}, ".format(implicit_method))
-                #legend_array.append("1st order, ref:{}".format(reference_method))
+                legend_array.append("1st order{}, ".format(implicit_method))
+                legend_array.append("1st order, ref:{}".format(reference_method))
                 # print("L2_error 1st order{} = " .format(implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
                 # print("L2_error 1st order{} = ".format(reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
 
-                print("L2_error relative 1st order{} = ".format(implicit_method),
-                      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
-                print("L2_error relative 1st order{} = ".format(reference_method),
-                      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
-                f = open('IM={im}.txt'.format(im=implicit_method), 'a')
-                f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N,
-                                              dh)) + ' ')
-                f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N,
-                                              dh)) + ' ')
+                #print("L2_error relative 1st order{} = ".format(implicit_method),
+                #      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
+                #print("L2_error relative 1st order{} = ".format(reference_method),
+                #      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
+                ##f = open('{eq},IM={im}.txt'.format(eq=equation,im=implicit_method), 'a')
+                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), yi, N,dh)) + ' ')
+                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), y, N, dh)) + ' ')
+
+
+
+                #f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N,
+                #                              dh)) + ' ')
+                #f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N,
+                #                              dh)) + ' ')
                 # f.write("hello")
 
             else:
-                #legend_array.append("WENO{order}, {method}".format(order=o, method=implicit_method))
-                #legend_array.append("WENO{order}, ref:{method}".format(order=o, method=reference_method))
+                legend_array.append("WENO{order}, {method}".format(order=o, method=implicit_method))
+                legend_array.append("WENO{order}, ref:{method}".format(order=o, method=reference_method))
                 # print("L2_error WENO{order}, {method}".format(order = o, method = implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
                 # print("L2_error WENO{order}, ref:{method}".format(order = o, method = reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
+                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), yi, N, dh)) + ' ')
+                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), y, N, dh)) + ' ')
 
-                print("L2_error relative WENO{order}, {method}".format(order=o, method=implicit_method),
-                      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
-                print("L2_error relative WENO{order}, ref:{method}".format(order=o, method=reference_method),
-                      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
-                f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N,
-                                              dh)) + ' ')
-                f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N,
-                                              dh)) + ' ')
+
+                #print("L2_error relative WENO{order}, {method}".format(order=o, method=implicit_method),
+                #      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
+                #print("L2_error relative WENO{order}, ref:{method}".format(order=o, method=reference_method),
+                #      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
+                #f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N,
+                #                              dh)) + ' ')
+                #f.write(str(L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N,
+                #                             dh)) + ' ')
 
                 # f.close()
-        f.write('\n')
-    f.close()
-        #plt.legend(legend_array)
-        #plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl=CFL, RS=riemann_solver_type))
-        #plt.show()
+        plt.legend(legend_array)
+        plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl=CFL, RS=riemann_solver_type))
+        plt.show()
+        ##f.write('\n')
+    ##f.close()
+
     #f.close()
 
 """
