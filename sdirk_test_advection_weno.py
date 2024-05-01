@@ -13,7 +13,7 @@ from ode_irk import ode_irk as irk
 from spatial_discretization import weno_interpolation
 from riemann_solvers import riemann_solver
 import B_stability_check as stabcheck
-
+import time
 
 class advection(object):
     def __init__(self, N, solver, order):
@@ -281,8 +281,11 @@ def L2_error_relative(u0, u, Nx, h):
 
 t0 = 0.0
 t1 = 2.0
-#CFL_arr = [0.5, 1.0, 4.0, 6.0, 8.0, 10.0]
-CFL_arr = [0.5, 1.0]
+start_time = 0.0
+step = 0
+CFL_arr = [0.5, 1.0, 4.0, 6.0, 8.0, 10.0]
+#CFL_arr = [0.5]
+#CFL_arr = [4.0, 6.0]
 N = 200
 dh = 2.0 /N
 #dt = CFL * dh
@@ -293,13 +296,13 @@ a = -1
 b = 1
 c_exp = 30.0
 orders = [1,3,5]
-#implicit_method_arr = ["IE", "IM", "CN", "L2C", "L3A", "G2P4", "G3P6", "L3B", "L3AS4", "SDIRK1BDF", "SDIRK4", "SDIRK3", "SDIRK2", "L3C", "R2A", "R2AS"]
+implicit_method_arr = ["IE", "IM", "CN", "L2C", "L3A", "G2P4", "G3P6", "L3B", "L3AS4", "SDIRK1BDF", "SDIRK4", "SDIRK3", "SDIRK2", "L3C", "R2A", "R2AS"]
 
-implicit_method_arr = ["SDIRK4", "SDIRK3"]
+#implicit_method_arr = ["SDIRK4", "SDIRK3"]
 #implicit_method_arr = ["SDIRK4", "SDIRK3"]#"IE", "IM", "CN", "L2C", "L3A", "G2P4", "G3P6", "L3B", "L3AS4", "SDIRK1BDF", "SDIRK4", "SDIRK3", "SDIRK2", "L3C", "R2A", "R2AS"
 newton_jacobian = "freeze" #"full"  "sdirk" "freeze"
 riemann_solver_type = "upwind" #"upwind"# "LF"
-exact_solution_type = "canonic" #"exponent"
+exact_solution_type = "exponent" #"exponent"
 equation = "advection"  # "advection", "Hopf(inviscid Burgers)"
 print("equation = ", equation)
 
@@ -402,255 +405,344 @@ for implicit_method in implicit_method_arr:
 
         y_orders = []
         yi_orders = []
+        duration_calc = []
+        #steps = []
 
         for order in orders:
             AD1.set_order(order)
-
+            #step = 0
             print(implicit_method, ', order = ', order)
             param_value = 0
             if implicit_method == "IE":
+                start_time = time.time()
                 stabcheck.check(A1, b1)
                 r_ie = irk(f = AD1.f, jac = AD1.jac, A = A1, c = c1, b = b1, b_hat = None, use_full_newton = newton_jacobian)
                 r_ie.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while r_ie.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (r_ie.t+dt)>t1:
                         dt1 = t1-r_ie.t
                         if(dt1<1.0e-12):
                             break
                     r_ie.integrate(r_ie.t+dt1)
                     print("t = ", r_ie.t)
+                end_time = time.time() - start_time
                 yi_orders.append(r_ie.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "IM":
+                start_time = time.time()
                 stabcheck.check(A1_IM, b1_IM)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A1_IM, c = c1_IM, b = b1_IM, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "CN":
+                start_time = time.time()
                 stabcheck.check(A2_CN, b2_CN)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A2_CN, c = c2_CN, b = b2_CN, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "G2P4":
+                start_time = time.time()
                 stabcheck.check(A2_G2P4, b2_G2P4)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A2_G2P4, c = c2_G2P4, b = b2_G2P4, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
 
 
 
             elif implicit_method == "L2C":
+                start_time = time.time()
                 stabcheck.check(A2_L2C, b2_L2C)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A2_L2C, c = c2_L2C, b = b2_L2C, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "L3A":
+                start_time = time.time()
                 stabcheck.check(A4_L3A, b4_L3A)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A4_L3A, c = c4_L3A, b = b4_L3A, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "L3B":
+                start_time = time.time()
                 stabcheck.check(A4_L3B, b4_L3B)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A4_L3B, c = c4_L3B, b = b4_L3B, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
 
             elif implicit_method == "G3P6":
+                start_time = time.time()
                 stabcheck.check(A3_G3P6, b3_G3P6)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A3_G3P6, c = c3_G3P6, b =b3_G3P6, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "L3AS4":
+                start_time = time.time()
                 stabcheck.check(A4_L3AS4, b4_L3AS4)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A4_L3AS4, c = c4_L3AS4, b =b4_L3AS4, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
 
             elif implicit_method == "R2A":
+                start_time = time.time()
                 stabcheck.check(A3_R2A, b3_R2A)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A3_R2A, c = c3_R2A, b =b3_R2A, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "R2AS":
+                start_time = time.time()
                 stabcheck.check(A4_L3A, b4_L3A)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A3_R2AS, c = c3_R2AS, b =b3_R2AS, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "L3C":
+                start_time = time.time()
                 stabcheck.check(A4_L3A, b4_L3A)
                 l3a2 = irk(f = AD1.f, jac = AD1.jac, A = A4_L3C, c = c4_L3C, b = b4_L3C, b_hat = None, use_full_newton = newton_jacobian)
                 l3a2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while l3a2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (l3a2.t+dt)>t1:
                         dt1 = t1-l3a2.t
                     if(dt1<1.0e-12):
                         break
                     l3a2.integrate(l3a2.t+dt1)
                     print("t = ", l3a2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(l3a2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "SDIRK2":
+                start_time = time.time()
                 stabcheck.check(A2, b2)
                 r_sdirk2 = sdirk(f = AD1.f, jac = AD1.jac, A = A2, c = c2, b = b2, b_hat = None, use_full_newton = newton_jacobian)
                 r_sdirk2.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while r_sdirk2.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (r_sdirk2.t+dt)>t1:
                         dt1 = t1-r_sdirk2.t
                     if(dt1<1.0e-12):
                         break
                     r_sdirk2.integrate(r_sdirk2.t+dt1)
                     print("t = ", r_sdirk2.t)
+                end_time = time.time() - start_time
                 yi_orders.append(r_sdirk2.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "SDIRK1BDF":
+                start_time = time.time()
                 stabcheck.check(A3_SDIRK1BDF, b3_SDIRK1BDF)
                 r_sdirk3 = sdirk(f = AD1.f, jac = AD1.jac, A = A3_SDIRK1BDF, c = c3_SDIRK1BDF, b = b3_SDIRK1BDF, b_hat = None, use_full_newton = newton_jacobian)
                 r_sdirk3.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while r_sdirk3.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (r_sdirk3.t+dt)>t1:
                         dt1 = t1-r_sdirk3.t
                     if(dt1<1.0e-12):
                         break
                     r_sdirk3.integrate(r_sdirk3.t+dt1)
                     print("t = ", r_sdirk3.t)
+                end_time = time.time() - start_time
                 yi_orders.append(r_sdirk3.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "SDIRK3":
+                start_time = time.time()
                 stabcheck.check(A3, b3)
                 r_sdirk3 = sdirk(f = AD1.f, jac = AD1.jac, A = A3, c = c3, b = b3, b_hat = None, use_full_newton = newton_jacobian)
                 r_sdirk3.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while r_sdirk3.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (r_sdirk3.t+dt)>t1:
                         dt1 = t1-r_sdirk3.t
                     if(dt1<1.0e-12):
                         break
                     r_sdirk3.integrate(r_sdirk3.t+dt1)
                     print("t = ", r_sdirk3.t)
+                end_time = time.time() - start_time
                 yi_orders.append(r_sdirk3.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
             elif implicit_method == "SDIRK4":
+                start_time = time.time()
                 stabcheck.check(A4, b4)
                 r_sdirk4 = sdirk(f = AD1.f, jac = AD1.jac, A = A4, c = c4, b = b4, b_hat = None, use_full_newton = newton_jacobian)
                 r_sdirk4.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
                 while r_sdirk4.t <= t1:
                     dt1 = dt
+                    #step += 1
                     if (r_sdirk4.t+dt)>t1:
                         dt1 = t1-r_sdirk4.t
                     if dt1<1.0e-12:
                         break
                     r_sdirk4.integrate(r_sdirk4.t+dt1)
                     print("t = ", r_sdirk4.t)
+                end_time = time.time() - start_time
                 yi_orders.append(r_sdirk4.y)
+                duration_calc.append(end_time)
+                #steps.append(step)
 
+            step = 0
 
             #refernce solution
             reference_method = 'dop853'
+            start_time = time.time()
             r = ode(AD1.f).set_integrator(reference_method, rtol = 1.0e-6, atol = 1.0e-11)
             r.set_initial_value(y0, t0).set_f_params(param_value).set_jac_params(param_value)
             print(reference_method, ', order = ', order)
             while r.successful() and r.t <= t1:
                 dt1 = dt
+                step += 1
+                print("step = ", step)
                 if (r.t+dt)>t1:
                     dt1 = t1-r.t
                 if(dt1<1.0e-12):
                     break
                 r.integrate(r.t+dt1)
+            end_time = time.time() - start_time
             y_orders.append(r.y)
+            duration_calc.append(end_time)
+            #steps.append(step)
 
 
 
@@ -665,9 +757,11 @@ for implicit_method in implicit_method_arr:
         for y, yi, o in zip(y_orders, yi_orders, orders):
             plt.plot(x, yi, '*')
             plt.plot(x, y, '.')
+            print("CFL = ", CFL)
+            print("steps = ", step)
 
             if o == 1:
-                legend_array.append("1st order{}, ".format(implicit_method))
+                legend_array.append("1st order, {}".format(implicit_method))
                 legend_array.append("1st order, ref:{}".format(reference_method))
                 # print("L2_error 1st order{} = " .format(implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
                 # print("L2_error 1st order{} = ".format(reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
@@ -676,9 +770,14 @@ for implicit_method in implicit_method_arr:
                 #      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), yi, N, dh))
                 #print("L2_error relative 1st order{} = ".format(reference_method),
                 #      L2_error_relative(np.interp(x, (x + ES.init(c_exp, x) * t1), ES.hopf(c_exp, x, t1)), y, N, dh))
-                ##f = open('{eq},IM={im}.txt'.format(eq=equation,im=implicit_method), 'a')
-                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), yi, N,dh)) + ' ')
-                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), y, N, dh)) + ' ')
+                f = open('{eq},C_exp={cexp},t={tf},IM={im}.txt'.format(eq=equation,cexp=c_exp,tf=t1,im=implicit_method), 'a')
+                g = open(
+                    '{eq},C_exp={cexp},t={tf},IM={im}-(times).txt'.format(eq=equation, cexp=c_exp, tf=t1, im=implicit_method),
+                    'a')
+                f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), yi, N,dh)) + ' ')
+                f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), y, N, dh)) + ' ')
+                g.write(str(duration_calc[o-1]) + ' ')
+                g.write(str(duration_calc[o]) + ' ')
 
 
 
@@ -693,8 +792,10 @@ for implicit_method in implicit_method_arr:
                 legend_array.append("WENO{order}, ref:{method}".format(order=o, method=reference_method))
                 # print("L2_error WENO{order}, {method}".format(order = o, method = implicit_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), yi, N, dh))
                 # print("L2_error WENO{order}, ref:{method}".format(order = o, method = reference_method), L2_error(np.interp(x, (x+ES.init(c_exp, x) * t1),  ES.hopf(c_exp, x, t1)), y, N, dh))
-                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), yi, N, dh)) + ' ')
-                ##f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), y, N, dh)) + ' ')
+                f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), yi, N, dh)) + ' ')
+                f.write(str(L2_error_relative(ES.advect(c_exp, x, t1), y, N, dh)) + ' ')
+                g.write(str(duration_calc[o-1]) + ' ')
+                g.write(str(duration_calc[o]) + ' ')
 
 
                 #print("L2_error relative WENO{order}, {method}".format(order=o, method=implicit_method),
@@ -707,11 +808,16 @@ for implicit_method in implicit_method_arr:
                 #                             dh)) + ' ')
 
                 # f.close()
-        plt.legend(legend_array)
-        plt.title("CFL = {cfl}, Riemann solver = {RS}".format(cfl=CFL, RS=riemann_solver_type))
-        plt.show()
-        ##f.write('\n')
-    ##f.close()
+        plt.legend(legend_array, loc='upper right')
+        plt.title("equation = {eq}, c_exp={cexp}, CFL = {cfl}, Riemann solver = {RS}".format(eq=equation,cexp=c_exp, cfl=CFL, RS=riemann_solver_type))
+        plt.savefig('{eq},c_exp={cexp},t={tf},IM={im},CFL={cfl}.png'.format(eq=equation,cexp=c_exp,tf=t1,im=implicit_method,cfl=CFL))
+        #plt.show()
+        f.write('\n')
+        f.write(str(step))
+        f.write('\n')
+        g.write('\n')
+    f.close()
+    g.close()
 
     #f.close()
 
